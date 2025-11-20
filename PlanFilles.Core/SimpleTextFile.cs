@@ -2,7 +2,7 @@
 
 public class SimpleTextFile
 {
-    public readonly string _path;
+    private readonly string _path;
 
     public SimpleTextFile(string path)
     {
