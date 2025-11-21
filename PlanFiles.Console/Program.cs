@@ -27,15 +27,105 @@ while (!salir)
 
     var opcion = Console.ReadLine();
 
+    switch (opcion)
+    {
+        case "1":
+            ListPeople();
+            break;
+        case "2":
+            AddPeople();
+            break;
+        case "3":
+            DeletePeople();
+            break;
+        case "4":
+            salir = true;
+            break;
+        default:
+            Console.WriteLine("Opción no válida.");
+            break;
+    }
+
+}
+
+void DeletePeople()
+{
+    Console.Write("ID de la persona a eliminar: ");
+    if (!int.TryParse(Console.ReadLine(), out int deleteId))
+    {
+        Console.WriteLine("ID inválido.");
+        return;
+    }
+
+    var personToRemove = people.FirstOrDefault(p => p.Id == deleteId);
+    if (personToRemove == null)
+    {
+        Console.WriteLine("No se encontró la persona.");
+        return;
+    }
+
+    people.Remove(personToRemove);
+    helper.Write(path, people);
+    Console.WriteLine("Persona eliminada.");
+    return;
+}
+
+void AddPeople()
+{
+    int newId;
+    while (true)
+    {
+        Console.Write("ID: ");
+        if (!int.TryParse(Console.ReadLine(), out newId))
+        {
+            Console.WriteLine("ID inválido. Intente de nuevo.");
+            continue;
+        }
+        if (people.Any(p => p.Id == newId))
+        {
+            Console.WriteLine("Ya existe una persona con ese ID. Intente con otro.");
+            continue;
+        }
+        break;
+    }
+    string name;
+    do
+    {
+        Console.Write("Nombre: ");
+        name = Console.ReadLine() ?? "";
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("El nombre no puede estar vacío.");
+        }
+    } while (string.IsNullOrWhiteSpace(name));
+    int age;
+    while (true)
+    {
+        Console.Write("Edad: ");
+        if (!int.TryParse(Console.ReadLine(), out age))
+        {
+            Console.WriteLine("Edad inválida. Intente de nuevo.");
+            continue;
+        }
+        if (age < 0 || age > 120)
+        {
+            Console.WriteLine("Edad fuera de rango razonable. Intente de nuevo.");
+            continue;
+        }
+        break;
+    }
+    people.Add(new Person { Id = newId, Name = name, Age = age });
+    helper.Write(path, people);
+    Console.WriteLine("Persona agregada.");
 }
 
 
-
-
-foreach (var person in people)
+void ListPeople()
 {
+    foreach (var person in people)
     Console.WriteLine($"ID: {person.Id}, Nombre: {person.Name}, Edad: {person.Age}");
 }
+
 
 
 
