@@ -1,27 +1,27 @@
 ﻿using CsvHelper;
-using System;
-using System.Collections.Generic;
+using CsvHelper.Configuration;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PlanFiles.Core
+namespace PlainFiles.Core;
+
+public class NugetCsvHelper
 {
-    public class NugetCsvHelper
+    public void Write(string path, IEnumerable<Person> people)
     {
-        public void Write(string path, IEnumerable<Person> people)
+        using var sw = new StreamWriter(path);
+        using var cw = new CsvWriter(sw, CultureInfo.InvariantCulture);
+        cw.WriteRecords(people);
+    }
+
+    public IEnumerable<Person> Read(string path)
+    {
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            using var sw = new StreamWriter(path);
-            using var cw = new CsvWriter(sw, CultureInfo.InvariantCulture);
-            cw.WriteRecords(people);
-        }
-        public IEnumerable<Person> Read(string path)
-        {
-            using var sr = new StreamReader(path);
-            using var cr = new CsvReader(sr, CultureInfo.InvariantCulture);
-            var records = cr.GetRecords<Person>().ToList();
-            return records;
-        }
+            Delimiter = ";"
+        };
+        using var sr = new StreamReader(path);
+        using var cr = new CsvReader(sr, config);
+        var records = cr.GetRecords<Person>().ToList();
+        return records;
     }
 }

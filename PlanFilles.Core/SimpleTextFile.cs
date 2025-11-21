@@ -1,4 +1,4 @@
-﻿namespace PlanFiles.Core;
+﻿namespace PlainFiles.Core;
 
 public class SimpleTextFile
 {
@@ -28,10 +28,12 @@ public class SimpleTextFile
             }
         }
     }
+
     public void WriteAllLines(string[] lines)
     {
         File.WriteAllLines(_path, lines);
     }
+
     public string[] ReadAllLines()
     {
         return File.ReadAllLines(_path);

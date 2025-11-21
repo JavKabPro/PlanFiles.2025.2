@@ -1,4 +1,4 @@
-﻿namespace PlanFiles.Core;
+﻿namespace PlainFiles.Core;
 
 public class ManualCsvHelper
 {

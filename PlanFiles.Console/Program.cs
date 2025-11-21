@@ -1,18 +1,61 @@
-﻿using PlanFiles.Core;
+﻿using PlainFiles.Core;
+using System.Text;
+string[] lineas = File.ReadAllLines("people.csv", Encoding.UTF8);
+
+
 
 Console.Write("Digite el nombre de la lista (por defecto 'people'): ");
 var listName = Console.ReadLine();
 if (string.IsNullOrEmpty(listName))
-{
     listName = "people";
+
+var path = $"{listName}.csv";
+var helper = new NugetCsvHelper();
+var people = helper.Read(path).ToList();
+
+bool salir = false;
+while (!salir)
+{
+    Console.WriteLine();
+    Console.WriteLine("\n*** Menú ***");
+    Console.WriteLine("1. Ver personas.");
+    Console.WriteLine("2. Agregar persona.");
+    Console.WriteLine("3. Eliminar persona");
+    Console.WriteLine("4. Salir");
+    Console.WriteLine("***Seleccione una opción.***");
+    Console.WriteLine();
+
+    var opcion = Console.ReadLine();
+
 }
 
-var helper = new NugetCsvHelper();
-var people = helper.Read($"{listName}.csv").ToList();
+
+
+
 foreach (var person in people)
 {
     Console.WriteLine($"ID: {person.Id}, Nombre: {person.Name}, Edad: {person.Age}");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //var manualCsv = new ManualCsvHelper();
 //var people = manualCsv.ReadCsv($"{listName}.csv");
