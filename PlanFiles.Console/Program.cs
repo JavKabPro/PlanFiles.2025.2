@@ -3,6 +3,51 @@ using System.Globalization;
 using System.Text;
 string[] lineas = File.ReadAllLines("people.csv", Encoding.UTF8);
 
+var userService = new UserService("Users.txt");
+Console.WriteLine("=== LOGIN REQUIRED ===");
+
+int attempts = 0;
+bool authenticated = false;
+string? currentUser = null;
+
+while (attempts < 3 && !authenticated)
+{
+    Console.Write("Username: ");
+    string username = Console.ReadLine() ?? "";
+    Console.Write("Password: ");
+    string password = Console.ReadLine() ?? "";
+
+    var user = userService.ValidateUser(username, password);
+    if (user != null)
+    {
+        authenticated = true;
+        currentUser = username;
+        Console.WriteLine("\nLogin successful.");
+        break;
+    }
+
+    attempts++;
+    if (!userService.UserExists(username))
+    {
+        Console.WriteLine("User does not exist.");
+    }
+    else
+    {
+        Console.WriteLine("Invalid credentials.");
+    }
+
+    if (attempts == 3)
+    {
+        Console.WriteLine("\nToo many attempts. User will be blocked.");
+        userService.BlockUser(username);
+        return;
+    }
+}
+
+Console.WriteLine("\nWelcome to the system.");
+
+
+
 string listName = "people";
 string path = $"{listName}.csv";
 var helper = new NugetCsvHelper();
