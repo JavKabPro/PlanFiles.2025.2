@@ -17,7 +17,7 @@ public class NugetCsvHelper
     {
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            Delimiter = ";"
+            Delimiter = ","
         };
         using var sr = new StreamReader(path);
         using var cr = new CsvReader(sr, config);
