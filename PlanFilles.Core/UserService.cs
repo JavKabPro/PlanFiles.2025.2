@@ -4,6 +4,21 @@ namespace PlainFiles.Core;
 public class UserService
 {
     private readonly string _path;
+    private readonly LogWriter _log;
+        public UserService(string path, LogWriter log)
+    {
+        _path = path;
+        _log = log;
+
+        if (!File.Exists(_path))
+        {
+            using var fs = File.Create(_path);
+        }
+
+        LoadUsers();
+    }
+
+
     private List<User> _users = new();
     public UserService(string path)
     {
@@ -35,9 +50,14 @@ public class UserService
 
     public User? ValidateUser(string username, string password)
     {
-        return _users.FirstOrDefault(u =>u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) 
-        && u.Password == password && u.IsActive);
+        var user = _users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) &&
+            u.Password == password && u.IsActive);
+        if (user != null)
+            _log.WriteLog("INFO", $"User '{username}' logged in successfully.");
+        return user;
     }
+
+
 
     public bool UserExists(string username)
     {
@@ -51,7 +71,10 @@ public class UserService
         {
             user.IsActive = false;
             SaveUsers();
+            _log.WriteLog("WARN", $"User '{username}' has been blocked due to failed login attempts.");
         }
     }
+
+
 }
 

@@ -3,38 +3,38 @@ using System.Globalization;
 using System.Text;
 string[] lineas = File.ReadAllLines("people.csv", Encoding.UTF8);
 
-var userService = new UserService("Users.txt");
+using var log = new LogWriter("log.txt");
+var userService = new UserService("Users.txt", log);
+
 Console.WriteLine("=== LOGIN REQUIRED ===");
 
 int attempts = 0;
 bool authenticated = false;
 string? currentUser = null;
 
+//Login
 while (attempts < 3 && !authenticated)
 {
     Console.Write("Username: ");
     string username = Console.ReadLine() ?? "";
     Console.Write("Password: ");
     string password = Console.ReadLine() ?? "";
-
     var user = userService.ValidateUser(username, password);
     if (user != null)
     {
         authenticated = true;
         currentUser = username;
+        log.WriteLog("INFO", $"User '{username}' logged in successfully.");
         Console.WriteLine("\nLogin successful.");
         break;
     }
 
     attempts++;
+    log.WriteLog("WARN", $"Failed login attempt for user '{username}'. Attempt {attempts}/3.");
     if (!userService.UserExists(username))
-    {
         Console.WriteLine("User does not exist.");
-    }
     else
-    {
         Console.WriteLine("Invalid credentials.");
-    }
 
     if (attempts == 3)
     {
@@ -46,15 +46,14 @@ while (attempts < 3 && !authenticated)
 
 Console.WriteLine("\nWelcome to the system.");
 
-
-
 string listName = "people";
 string path = $"{listName}.csv";
+
 var helper = new NugetCsvHelper();
 var people = helper.Read(path).ToList();
-
 bool salir = false;
 
+// Principal Menu
 while (!salir)
 {
     Console.WriteLine();
@@ -67,31 +66,44 @@ while (!salir)
     Console.WriteLine("==========================");
     Console.Write("Choose an option: ");
     Console.WriteLine();
+
     var opcion = Console.ReadLine();
 
     switch (opcion)
     {
         case "1":
+            log.WriteLog("INFO", $"User '{currentUser}' listed all people.");
             ListPeople();
             break;
+
         case "2":
+            log.WriteLog("INFO", $"User '{currentUser}' is adding a new person.");
             AddPeople();
             break;
+
         case "3":
             SaveFile(people, listName);
+            log.WriteLog("INFO", $"User '{currentUser}' saved the file '{listName}.csv'.");
             Console.WriteLine("File saved.");
             break;
+
         case "4":
+            log.WriteLog("INFO", $"User '{currentUser}' is deleting a person.");
             DeletePeople();
             break;
+
         case "0":
+            log.WriteLog("INFO", $"User '{currentUser}' exited the system.");
             salir = true;
             break;
+
         default:
             Console.WriteLine("Invalid option.");
             break;
     }
 }
+
+
 void SaveFile(List<Person> people, string? listName)
 {
     if (string.IsNullOrWhiteSpace(listName))
@@ -103,90 +115,85 @@ void SaveFile(List<Person> people, string? listName)
 
 void DeletePeople()
 {
-        Console.WriteLine();
-        Console.WriteLine("Delete by:");
-        Console.WriteLine("1. Id");
-        Console.WriteLine("2. Name");
-        Console.WriteLine("3. Phone");
-        Console.WriteLine("4. City");
-        Console.Write("Option: ");
-        string option = Console.ReadLine() ?? "";
-        List<Person> toRemove = new();
+    Console.WriteLine();
+    Console.WriteLine("Delete by:");
+    Console.WriteLine("1. Id");
+    Console.WriteLine("2. Name");
+    Console.WriteLine("3. Phone");
+    Console.WriteLine("4. City");
+    Console.Write("Option: ");
 
-        switch (option)
-        {
-            case "1":
-                Console.Write("Enter Id: ");
-                if (!int.TryParse(Console.ReadLine(), out int idToDelete))
-                {
-                    Console.WriteLine("Invalid Id.");
-                    return;
-                }
-                var byId = people.FirstOrDefault(p => p.Id == idToDelete);
-                if (byId == null)
-                {
-                    Console.WriteLine("No person found with that Id.");
-                    return;
-                }
-                toRemove.Add(byId);
-                break;
-            case "2":
-                Console.Write("Enter Name: ");
-                string name = (Console.ReadLine() ?? "").Trim();
-                toRemove = people.Where(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+    string option = Console.ReadLine() ?? "";
+    List<Person> toRemove = new();
 
-                if (!toRemove.Any())
-                {
-                    Console.WriteLine("No person found with that name.");
-                    return;
-                }
-                break;
-            case "3":
-                Console.Write("Enter Phone: ");
-                string phone = (Console.ReadLine() ?? "").Trim();
-
-                toRemove = people.Where(p => p.Phone.Equals(phone, StringComparison.OrdinalIgnoreCase)).ToList();
-                if (!toRemove.Any())
-                {
-                    Console.WriteLine("No person found with that phone.");
-                    return;
-                }
-                break;
-            case "4":
-                Console.Write("Enter City: ");
-                string city = (Console.ReadLine() ?? "").Trim();
-
-                toRemove = people
-                    .Where(p => p.City.Equals(city, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                if (!toRemove.Any())
-                {
-                    Console.WriteLine("No person found with that city.");
-                    return;
-                }
-                break;
-            default:
-                Console.WriteLine("Invalid option.");
+    switch (option)
+    {
+        case "1":
+            Console.Write("Enter Id: ");
+            if (!int.TryParse(Console.ReadLine(), out int idToDelete))
+            {
+                Console.WriteLine("Invalid Id.");
                 return;
-        }
+            }
+            var byId = people.FirstOrDefault(p => p.Id == idToDelete);
+            if (byId == null)
+            {
+                Console.WriteLine("No person found with that Id.");
+                return;
+            }
+            toRemove.Add(byId);
+            break;
+
+        case "2":
+            Console.Write("Enter Name: ");
+            string name = (Console.ReadLine() ?? "").Trim();
+            toRemove = people.Where(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (!toRemove.Any())
+            {
+                Console.WriteLine("No person found with that name.");
+                return;
+            }
+            break;
+
+        case "3":
+            Console.Write("Enter Phone: ");
+            string phone = (Console.ReadLine() ?? "").Trim();
+            toRemove = people.Where(p => p.Phone.Equals(phone, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (!toRemove.Any())
+            {
+                Console.WriteLine("No person found with that phone.");
+                return;
+            }
+            break;
+
+        case "4":
+            Console.Write("Enter City: ");
+            string city = (Console.ReadLine() ?? "").Trim();
+            toRemove = people.Where(p => p.City.Equals(city, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (!toRemove.Any())
+            {
+                Console.WriteLine("No person found with that city.");
+                return;
+            }
+            break;
+
+        default:
+            Console.WriteLine("Invalid option.");
+            return;
+    }
+
     foreach (var p in toRemove)
         people.Remove(p);
 
     people = people.OrderBy(p => p.Id).ToList();
     helper.Write(path, people);
-
+    log.WriteLog("INFO", $"User '{currentUser}' deleted {toRemove.Count} person(s).");
     Console.WriteLine($"{toRemove.Count} person(s) deleted.");
 }
 
 void AddPeople()
 {
-    int newId;
-    if (people.Count == 0)
-        newId = 1;
-    else
-        newId = people.Max(p => p.Id) + 1;
-
+    int newId = people.Count == 0 ? 1 : people.Max(p => p.Id) + 1;
     Console.WriteLine();
     Console.WriteLine("Adding new person:");
 
@@ -232,17 +239,18 @@ void AddPeople()
         break;
     }
 
-    people.Add(new Person{Id = newId, Name = name, Phone = phone, City = city, Balance = balance});
+    people.Add(new Person { Id = newId, Name = name, Phone = phone, City = city, Balance = balance });
     people = people.OrderBy(p => p.Id).ToList();
     helper.Write(path, people);
+
+    log.WriteLog("INFO", $"User '{currentUser}' added person '{name}' with Id {newId}.");
+
     Console.WriteLine("Person added.");
 }
-
 
 void ListPeople()
 {
     Console.WriteLine();
-
     if (!people.Any())
     {
         Console.WriteLine("No records found.");
@@ -259,6 +267,7 @@ void ListPeople()
         Console.WriteLine();
     }
 }
+
 
 
 
