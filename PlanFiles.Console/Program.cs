@@ -64,6 +64,7 @@ while (!salir)
     Console.WriteLine("4. Delete person.");
     Console.WriteLine("5. Edit person.");
     Console.WriteLine("6. Delete person (with confirmation).");
+    Console.WriteLine("7. Report by City.");
     Console.WriteLine("0. Exit.");
     Console.WriteLine("==========================");
     Console.Write("Choose an option: ");
@@ -99,6 +100,10 @@ while (!salir)
             log.WriteLog("INFO", $"User '{currentUser}' is attempting to delete a person.");
             DeletePersonWithConfirmation();
             break;
+        case "7":
+            log.WriteLog("INFO", $"User '{currentUser}' generated report by city.");
+            ReportByCity();
+            break;
         case "0":
             log.WriteLog("INFO", $"User '{currentUser}' exited the system.");
             salir = true;
@@ -109,6 +114,46 @@ while (!salir)
             break;
     }
 }
+
+void ReportByCity()
+    {
+        if (!people.Any())
+        {
+            Console.WriteLine("No records found.");
+            return;
+        }
+
+        Console.WriteLine("\n===== REPORT BY CITY =====\n");
+
+        var groups = people.GroupBy(p => p.City).OrderBy(g => g.Key);
+        decimal totalGeneral = 0;
+        foreach (var group in groups)
+        {
+            Console.WriteLine($"Ciudad: {group.Key}\n");
+            Console.WriteLine("ID\tNombres\t\tApellidos\tSaldo");
+            Console.WriteLine("—\t—-------------\t—------------\t—----------");
+
+            decimal subtotal = 0;
+            foreach (var p in group)
+            {
+                var parts = p.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                string nombres = parts.Length > 0 ? parts[0] : "";
+                string apellidos = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : "";
+                Console.WriteLine($"{p.Id}\t{nombres}\t\t{apellidos}\t\t{p.Balance.ToString("N2", CultureInfo.CurrentCulture)}");
+                subtotal += p.Balance;
+            }
+
+            Console.WriteLine("\t\t\t\t=======");
+            Console.WriteLine($"Total: {group.Key}\t\t\t{subtotal.ToString("N2", CultureInfo.CurrentCulture)}\n");
+            totalGeneral += subtotal;
+        }
+
+        Console.WriteLine("\t\t\t\t=======");
+        Console.WriteLine($"Total General:\t\t\t{totalGeneral.ToString("N2", CultureInfo.CurrentCulture)}\n");
+    }
+
+
+
 
 void DeletePersonWithConfirmation()
 {
@@ -354,8 +399,6 @@ void AddPeople()
 
     Console.WriteLine("Person added successfully.");
 }
-
-
 
 void ListPeople()
 {

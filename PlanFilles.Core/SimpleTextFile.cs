@@ -3,14 +3,12 @@
 public class SimpleTextFile
 {
     private readonly string _path;
-
     public SimpleTextFile(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
             throw new ArgumentException("Path cannot be null or whitespace.", nameof(path));
         }
-
         _path = path;
 
         // Ensure directory exists

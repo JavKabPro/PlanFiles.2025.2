@@ -5,30 +5,18 @@ public class UserService
 {
     private readonly string _path;
     private readonly LogWriter _log;
-        public UserService(string path, LogWriter log)
+    private List<User> _users = new();
+    public UserService(string path, LogWriter log)
     {
         _path = path;
         _log = log;
-
-        if (!File.Exists(_path))
-        {
-            using var fs = File.Create(_path);
-        }
-
-        LoadUsers();
-    }
-
-
-    private List<User> _users = new();
-    public UserService(string path)
-    {
-        _path = path;
         if (!File.Exists(_path))
         {
             using var fs = File.Create(_path);
         }
         LoadUsers();
     }
+
     private void LoadUsers()
     {
         _users = File.ReadAllLines(_path, Encoding.UTF8).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line =>
@@ -56,9 +44,6 @@ public class UserService
             _log.WriteLog("INFO", $"User '{username}' logged in successfully.");
         return user;
     }
-
-
-
     public bool UserExists(string username)
     {
         return _users.Any(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
@@ -74,7 +59,5 @@ public class UserService
             _log.WriteLog("WARN", $"User '{username}' has been blocked due to failed login attempts.");
         }
     }
-
-
 }
 
