@@ -82,7 +82,6 @@ while (!salir)
             log.WriteLog("INFO", $"User '{currentUser}' is adding a new person.");
             AddPeople();
             break;
-
         case "3":
             SaveFile(people, listName);
             log.WriteLog("INFO", $"User '{currentUser}' saved the file '{listName}.csv'.");
@@ -152,7 +151,7 @@ void DeletePersonWithConfirmation()
         log.WriteLog("INFO", $"User '{currentUser}' deleted person with Id {id}.");
     }
 
-    void EditPerson()
+void EditPerson()
 {
     Console.Write("Enter the ID of the person to edit: ");
     if (!int.TryParse(Console.ReadLine(), out int id))
@@ -176,91 +175,40 @@ void DeletePersonWithConfirmation()
 
     Console.Write("New Name (ENTER to keep current): ");
     string newName = (Console.ReadLine() ?? "").Trim();
-
     if (!string.IsNullOrWhiteSpace(newName))
-    {
-        while (true)
-        {
-            var parts = newName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length < 2)
-            {
-                Console.Write("You must enter first and last name. Try again: ");
-                newName = Console.ReadLine() ?? "";
-                continue;
-            }
-
-            if (parts.Any(p => p.Any(char.IsDigit)))
-            {
-                Console.Write("Names cannot contain numbers. Try again: ");
-                newName = Console.ReadLine() ?? "";
-                continue;
-            }
-
-            person.Name = newName;
-            break;
-        }
-    }
+        person.Name = newName;
 
     Console.Write("New Phone (ENTER to keep current): ");
     string newPhone = (Console.ReadLine() ?? "").Trim();
-
     if (!string.IsNullOrWhiteSpace(newPhone))
-    {
-        while (true)
-        {
-            if (!newPhone.All(c => char.IsDigit(c) || c == ' ' || c == '-' || c == '+'))
-            {
-                Console.Write("Phone contains invalid characters. Try again: ");
-                newPhone = Console.ReadLine() ?? "";
-                continue;
-            }
-
-            int digitCount = newPhone.Count(char.IsDigit);
-            if (digitCount < 7)
-            {
-                Console.Write("Phone must contain at least 7 digits. Try again: ");
-                newPhone = Console.ReadLine() ?? "";
-                continue;
-            }
-
-            person.Phone = newPhone;
-            break;
-        }
-    }
+        person.Phone = newPhone;
 
     Console.Write("New City (ENTER to keep current): ");
     string newCity = (Console.ReadLine() ?? "").Trim();
-
     if (!string.IsNullOrWhiteSpace(newCity))
         person.City = newCity;
 
     Console.Write("New Balance (ENTER to keep current): ");
     string balanceInput = (Console.ReadLine() ?? "").Trim();
-
     if (!string.IsNullOrWhiteSpace(balanceInput))
     {
-        decimal newBalance;
-        while (true)
-        {
-            if (!decimal.TryParse(balanceInput, NumberStyles.Any, CultureInfo.InvariantCulture, out newBalance))
-            {
-                Console.Write("Invalid balance. Enter a numeric value: ");
-                balanceInput = Console.ReadLine() ?? "";
-                continue;
-            }
-
-            if (newBalance <= 0)
-            {
-                Console.Write("Balance must be positive. Try again: ");
-                balanceInput = Console.ReadLine() ?? "";
-                continue;
-            }
-
+        if (decimal.TryParse(balanceInput, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal newBalance))
             person.Balance = newBalance;
-            break;
-        }
     }
+
+    var validator = new PersonValidator();
+    var result = validator.Validate(person);
+
+    if (!result.IsValid)
+    {
+        Console.WriteLine("\nValidation errors:");
+        foreach (var error in result.Errors)
+            Console.WriteLine($" - {error.ErrorMessage}");
+
+        log.WriteLog("WARN", $"User '{currentUser}' failed to edit person Id {id} due to validation errors.");
+        return;
+    }
+
     people = people.OrderBy(p => p.Id).ToList();
     helper.Write(path, people);
     log.WriteLog("INFO", $"User '{currentUser}' edited person with Id {id}.");
@@ -357,100 +305,57 @@ void DeletePeople()
 void AddPeople()
 {
     int newId = people.Count == 0 ? 1 : people.Max(p => p.Id) + 1;
+
     Console.WriteLine();
     Console.WriteLine("Adding new person:");
 
-    string name;
-    while (true)
+    Console.Write("Name (first and last name): ");
+    string name = (Console.ReadLine() ?? "").Trim();
+
+    Console.Write("Phone: ");
+    string phone = (Console.ReadLine() ?? "").Trim();
+
+    Console.Write("City: ");
+    string city = (Console.ReadLine() ?? "").Trim();
+
+    Console.Write("Balance: ");
+    string balanceInput = (Console.ReadLine() ?? "").Trim();
+
+    decimal balance = 0;
+    decimal.TryParse(balanceInput, NumberStyles.Any, CultureInfo.InvariantCulture, out balance);
+
+    var person = new Person
     {
-        Console.Write("Name (first and last name): ");
-        name = (Console.ReadLine() ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            Console.WriteLine("Name cannot be empty.");
-            continue;
-        }
+        Id = newId,
+        Name = name,
+        Phone = phone,
+        City = city,
+        Balance = balance
+    };
 
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2)
-        {
-            Console.WriteLine("You must enter at least first name and last name.");
-            continue;
-        }
+    var validator = new PersonValidator();
+    var result = validator.Validate(person);
 
-        if (parts.Any(p => p.Any(char.IsDigit)))
-        {
-            Console.WriteLine("Names cannot contain numbers.");
-            continue;
-        }
+    if (!result.IsValid)
+    {
+        Console.WriteLine("\nValidation errors:");
+        foreach (var error in result.Errors)
+            Console.WriteLine($" - {error.ErrorMessage}");
 
-        break;
+        log.WriteLog("WARN", $"User '{currentUser}' failed to add person due to validation errors.");
+        return;
     }
 
-    string phone;
-    while (true)
-    {
-        Console.Write("Phone: ");
-        phone = (Console.ReadLine() ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(phone))
-        {
-            Console.WriteLine("Phone cannot be empty.");
-            continue;
-        }
-
-        if (!phone.All(c => char.IsDigit(c) || c == ' ' || c == '-' || c == '+'))
-        {
-            Console.WriteLine("Phone contains invalid characters.");
-            continue;
-        }
-
-        int digitCount = phone.Count(char.IsDigit);
-        if (digitCount < 7)
-        {
-            Console.WriteLine("Phone must contain at least 7 digits.");
-            continue;
-        }
-
-        break;
-    }
-
-    string city;
-    do
-    {
-        Console.Write("City: ");
-        city = Console.ReadLine() ?? "";
-        if (string.IsNullOrWhiteSpace(city))
-            Console.WriteLine("City cannot be empty.");
-    }
-    while (string.IsNullOrWhiteSpace(city));
-
-    decimal balance;
-    while (true)
-    {
-        Console.Write("Balance: ");
-        string input = Console.ReadLine() ?? "";
-        if (!decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out balance))
-        {
-            Console.WriteLine("Invalid balance. Enter a numeric value.");
-            continue;
-        }
-
-        if (balance <= 0)
-        {
-            Console.WriteLine("Balance must be a positive number.");
-            continue;
-        }
-
-        break;
-    }
-
-    people.Add(new Person { Id = newId, Name = name, Phone = phone, City = city, Balance = balance });
+    people.Add(person);
     people = people.OrderBy(p => p.Id).ToList();
     helper.Write(path, people);
 
     log.WriteLog("INFO", $"User '{currentUser}' added person '{name}' with Id {newId}.");
-    Console.WriteLine("Person added.");
+
+    Console.WriteLine("Person added successfully.");
 }
+
+
 
 void ListPeople()
 {
